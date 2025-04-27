@@ -1,0 +1,6 @@
+```xml
+<svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <path d="M16 2L4 7V15C4 22.1797 9.10547 28.7266 16 30C22.8945 28.7266 28 22.1797 28 15V7L16 2Z" fill="#E44332"/>
+  <path d="M16 4L6 8.2V15C6 21.0797 10.2055 26.7266 16 27.8C21.7945 26.7266 26 21.0797 26 15V8.2L16 4Z" fill="#FAFAFA" fill-opacity="0.1"/>
+</svg>
+```
