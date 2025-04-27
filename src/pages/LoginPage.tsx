@@ -14,12 +14,12 @@ export default function LoginPage() {
         const { data: { session } } = await supabase.auth.getSession();
         
         if (session?.user) {
-          navigate('/', { replace: true });
+          navigate('/', { replace: true });  // Redireciona se a sessão estiver ativa
         }
       } catch (error) {
         console.error('Error checking session:', error);
       } finally {
-        setIsChecking(false);
+        setIsChecking(false);  // Finaliza o loading
       }
     };
 

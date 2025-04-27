@@ -1,116 +1,79 @@
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
-import { useLoadingState } from '@/lib/hooks/use-loading-state';
-import * as auth from '@/lib/auth';
-import { AlertCircle } from 'lucide-react';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { supabase } from '@/lib/supabase';  // Certifique-se de que o supabase.js está configurado corretamente
 
-export default function AuthForm() {
+const AuthForm = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const navigate = useNavigate();
-  const { toast } = useToast();
-  
-  const { isLoading, error, execute } = useLoadingState({
-    errorMessage: "Erro ao fazer login",
-  });
-  
-  const handleSubmit = async (e: React.FormEvent) => {
+  const [loading, setLoading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!email.trim() || !password.trim()) {
-      toast({
-        title: "Campos obrigatórios",
-        description: "Por favor, preencha todos os campos",
-        variant: "destructive",
+    setLoading(true);
+    setErrorMessage('');
+
+    try {
+      // Tente o login com email e senha usando Supabase
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
-      return;
+
+      if (error) {
+        setErrorMessage(error.message); // Exibe a mensagem de erro se falhar
+      } else {
+        // Se o login for bem-sucedido, redirecione para a página principal ou dashboard
+        console.log('Usuário autenticado com sucesso');
+        window.location.href = '/dashboard';  // Redireciona para o dashboard (pode ser alterado para outra página)
+      }
+    } catch (err) {
+      console.error('Erro no login:', err);
+      setErrorMessage('Erro no login, tente novamente mais tarde.'); // Exibe uma mensagem genérica de erro
+    } finally {
+      setLoading(false); // Libera o botão de login novamente após o processamento
     }
-    
-    execute(auth.signIn(email, password), {
-      onSuccess: ({ user, profile }) => {
-        if (!user?.id) {
-          throw new Error('Erro ao recuperar dados do usuário');
-        }
-
-        if (!profile?.active) {
-          throw new Error('Conta desativada. Entre em contato com o suporte.');
-        }
-
-        toast({
-          title: "Login realizado com sucesso!",
-          description: `Bem-vindo de volta, ${profile.name || 'usuário'}!`,
-        });
-
-        navigate(`/dashboard/${user.id}`, { replace: true });
-      },
-    });
   };
 
   return (
-    <div className="space-y-6">
-      <div className="space-y-2">
-        <h2 className="text-2xl font-semibold text-[#1E1E1E]">Entrar</h2>
-        <p className="text-sm text-[#666666]">
-          Entre com suas credenciais para acessar o sistema
-        </p>
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label htmlFor="email" className="block text-sm font-medium">Email</label>
+        <input
+          type="email"
+          id="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          required
+          className="w-full p-2 border border-gray-300 rounded-md"
+          placeholder="Digite seu email"
+        />
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-4">
-        {error && (
-          <Alert variant="destructive" className="animate-in fade-in-50">
-            <AlertCircle className="h-4 w-4" />
-            <AlertDescription>{error.message}</AlertDescription>
-          </Alert>
-        )}
-        
-        <div className="space-y-2">
-          <Label htmlFor="email" className="text-[#1E1E1E]">Email</Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="seu@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            required
-            disabled={isLoading}
-            className="bg-white border-[#AAAAAA] focus:border-[#E44332] focus:ring-[#E44332]/20"
-          />
-        </div>
-        
-        <div className="space-y-2">
-          <Label htmlFor="password" className="text-[#1E1E1E]">Senha</Label>
-          <Input
-            id="password"
-            type="password"
-            placeholder="••••••••"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-            disabled={isLoading}
-            className="bg-white border-[#AAAAAA] focus:border-[#E44332] focus:ring-[#E44332]/20"
-          />
-        </div>
-        
-        <Button 
-          type="submit" 
-          className="w-full bg-[#E44332] hover:bg-[#C33A2A] transition-all duration-300 hover:scale-[1.02] h-12 text-lg font-medium" 
-          disabled={isLoading}
-        >
-          {isLoading ? (
-            <div className="flex items-center gap-2">
-              <div className="w-5 h-5 border-2 border-current border-t-transparent rounded-full animate-spin"></div>
-              <span>Entrando...</span>
-            </div>
-          ) : (
-            "Entrar"
-          )}
-        </Button>
-      </form>
-    </div>
+      <div>
+        <label htmlFor="password" className="block text-sm font-medium">Senha</label>
+        <input
+          type="password"
+          id="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+          required
+          className="w-full p-2 border border-gray-300 rounded-md"
+          placeholder="Digite sua senha"
+        />
+      </div>
+
+      {/* Exibe a mensagem de erro se houver */}
+      {errorMessage && <div className="text-red-600 text-sm">{errorMessage}</div>}
+
+      <button 
+        type="submit" 
+        className="w-full p-2 bg-red-600 text-white rounded-md" 
+        disabled={loading}  // Desabilita o botão enquanto carrega
+      >
+        {loading ? 'Entrando...' : 'Entrar'}  {/* Exibe "Entrando..." durante o processamento */}
+      </button>
+    </form>
   );
-}
+};
+
+export default AuthForm;
